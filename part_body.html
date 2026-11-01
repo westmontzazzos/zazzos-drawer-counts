@@ -1,0 +1,159 @@
+<body>
+<div id="app">
+
+<!-- ============ HOME: DRAWER COUNT or STORES ============ -->
+<div id="s-landing" class="screen">
+  <div class="hero hero-flex"><img src="icon-192.png" alt=""><div><div class="hero-title">ZAZZO'S DRAWERS</div><div class="hero-sub">What do you need?</div></div></div>
+  <div class="tile" onclick="openSimple()">
+    <div class="tile-ico">&#128181;</div>
+    <div><div class="tile-name">DRAWER COUNT</div><div class="tile-sub">Just count a drawer &mdash; coins, rolls, dollars, total.</div></div>
+  </div>
+  <div class="tile" onclick="openStores()">
+    <div class="tile-ico">&#128274;</div>
+    <div><div class="tile-name">STORES</div><div class="tile-sub">Darien &amp; Westmont &mdash; counts, history, reports.<br>PIN needed.</div></div>
+  </div>
+</div>
+
+<!-- ============ SIMPLE COUNTER (no saving, no names -- just the math) ============ -->
+<div id="s-simple" class="screen">
+  <div class="topbar"><button class="btn back" onclick="back()">&lsaquo; Back</button><button class="btn back" style="margin-left:auto;" onclick="buildSimple()">Clear</button></div>
+  <div class="hero"><div class="hero-title">DRAWER COUNT</div><div class="hero-sub">Count it and get the total. Nothing is saved.</div></div>
+  <div class="acc"><div class="acc-head" style="cursor:default;"><span class="acc-title">COINS</span><span class="acc-title" id="st-coins">$0.00</span></div><div class="acc-body" id="sbody-coins"></div></div>
+  <div class="acc"><div class="acc-head" style="cursor:default;"><span class="acc-title">COIN ROLLS</span><span class="acc-title" id="st-rolls">$0.00</span></div><div class="acc-body" id="sbody-rolls"></div></div>
+  <div class="acc"><div class="acc-head" style="cursor:default;"><span class="acc-title">DOLLARS</span><span class="acc-title" id="st-bills">$0.00</span></div><div class="acc-body" id="sbody-bills"></div></div>
+  <div class="totalbox"><div class="tlabel">Total</div><div class="tamt" id="st-total">$0.00</div></div>
+</div>
+
+<!-- ============ SELECT A STORE ============ -->
+<div id="s-stores" class="screen">
+  <div class="topbar"><button class="btn back" onclick="back()">&lsaquo; Back</button></div>
+  <div class="hero"><div class="hero-title">ZAZZO'S DRAWER COUNTS</div><div class="hero-sub">Select a store</div></div>
+  <div class="tile" onclick="pickStore('darien')">
+    <img id="logo-darien" alt="Darien">
+    <div><div class="tile-name">DARIEN</div><div class="tile-sub">Cashier &middot; Bar &middot; Safe</div></div>
+  </div>
+  <div class="tile" onclick="pickStore('westmont')">
+    <img id="logo-westmont" alt="Westmont">
+    <div><div class="tile-name">WESTMONT</div><div class="tile-sub">Cashier 5 &amp; 8 &middot; Driver 2<br>Bars 9 &amp; 12 &middot; Safe</div></div>
+  </div>
+</div>
+
+<!-- ============ STORE HOME ============ -->
+<div id="s-home" class="screen">
+  <div class="topbar"><button class="btn back" onclick="back()">&lsaquo; Stores</button></div>
+  <div class="hero hero-flex"><img id="home-logo" alt=""><div><div class="hero-title" id="home-title"></div><div class="hero-sub">Tap a drawer &mdash; it knows what step you're on</div></div></div>
+  <div class="muted center" id="home-date" style="margin-bottom:10px;"></div>
+  <div id="home-cards"></div>
+  <button class="btn btn-primary btn-block" onclick="openReport()">&#128424; Print Everything (Today)</button>
+  <button class="btn btn-block mt" onclick="openDisc()">&#9888;&#65039; Discrepancies</button>
+  <button class="btn btn-block mt" onclick="openHistory()">&#128197; History</button>
+</div>
+
+<!-- ============ SHIFT CHANGE / CLOSE CHOICE ============ -->
+<div id="s-choice" class="screen">
+  <div class="topbar"><button class="btn back" onclick="back()">&lsaquo; Back</button></div>
+  <div class="card center">
+    <div class="h2 big" id="choice-title"></div>
+    <div class="muted" style="margin-top:4px;">Already opened today &mdash; what is this count?</div>
+    <div class="row2">
+      <button id="choice-shift" class="btn btn-primary" onclick="beginCount('shift_change')">Shift Change</button>
+      <button class="btn btn-dark" onclick="beginCount('closer')">Close</button>
+    </div>
+    <button class="btn btn-block mt" onclick="seeCounts()">See Counts <span class="muted">&mdash; today's counts for this drawer</span></button>
+    <button id="choice-spot" class="btn btn-block mt" onclick="beginCount('spot_check')">Spot Check <span class="muted">&mdash; just count &amp; record</span></button>
+  </div>
+</div>
+
+<!-- ============ BAR CHECKLIST (before counting a shift change / close) ============ -->
+<div id="s-check" class="screen">
+  <div class="topbar"><button class="btn back" onclick="back()">&lsaquo; Back</button></div>
+  <div class="card">
+    <div class="h2 big" id="check-title"></div>
+    <div class="muted" style="margin:4px 0 14px;">Do these two first, then count.</div>
+    <div class="chk" id="chk1" onclick="toggleCheck(1)"><span class="box" id="box1"></span><span>Close out the bartender</span></div>
+    <div class="chk" id="chk2" onclick="toggleCheck(2)"><span class="box" id="box2"></span><span>Close out the bar</span></div>
+    <div class="hint">Pay the bartender her tip-out from the drawer now. Then count what's left in the drawer.</div>
+    <button id="btn-count" class="btn btn-primary btn-block" disabled onclick="openForm()">Count</button>
+  </div>
+</div>
+
+<!-- ============ COUNT FORM ============ -->
+<div id="s-form" class="screen">
+  <div class="topbar"><button class="btn back" onclick="back()">&lsaquo; Back</button><button class="btn back" style="margin-left:auto;" onclick="openHistory()">&#128197; History</button></div>
+  <div class="mrow"><div class="mtitle" id="form-title"></div><div class="muted" id="form-date"></div></div>
+  <div class="hint" id="draft-banner" style="display:none;margin:0 0 10px;">Your unsaved count was kept &mdash; pick up where you left off. <a href="#" onclick="discardDraft();return false;" style="color:#c8102e;font-weight:600;">Start over</a></div>
+  <div class="card" style="padding:6px 14px;">
+    <div class="frow"><label>Name of person counting</label><input type="text" id="f-name" class="wide" placeholder="Name" autocomplete="off" autocapitalize="words" oninput="onInput()"></div>
+    <div class="frow" id="row-open"><label id="f-open-label">Drawer opened at</label><input type="number" inputmode="decimal" step="0.01" id="f-open" oninput="onInput()"></div>
+    <div class="frow" id="row-pos"><label>POS says it should be at</label><input type="number" inputmode="decimal" step="0.01" id="f-pos" oninput="onInput()"></div>
+    <div class="frow" id="row-tip"><label>Tip-out paid to bartender</label><input type="number" inputmode="decimal" step="0.01" id="f-tip" oninput="onInput()"></div>
+  </div>
+
+  <div class="acc" id="acc-coins"><div class="acc-head" onclick="toggleAcc('coins')"><span class="acc-title">LOOSE COINS</span><span class="chev" id="chev-coins">&#9660;</span></div><div class="acc-body" id="body-coins" style="display:none;"></div></div>
+  <div class="acc" id="acc-rolls"><div class="acc-head" onclick="toggleAcc('rolls')"><span class="acc-title">ROLLS</span><span class="chev" id="chev-rolls">&#9650;</span></div><div class="acc-body" id="body-rolls"></div></div>
+  <div class="acc" id="acc-bills"><div class="acc-head" onclick="toggleAcc('bills')"><span class="acc-title">BILLS</span><span class="chev" id="chev-bills">&#9650;</span></div><div class="acc-body" id="body-bills"></div></div>
+
+  <div class="totalbox">
+    <div class="tlabel">Total in Drawer</div>
+    <div class="tamt" id="t-total">$0.00</div>
+    <div class="tline" id="t-pull">&mdash;</div>
+    <div class="tline" id="t-pos" style="border-top:1px solid rgba(255,255,255,0.15);padding-top:6px;">&mdash;</div>
+    <div class="tnote" id="t-tip"></div>
+  </div>
+  <div class="row2" style="margin-bottom:30px;">
+    <button class="btn btn-primary" id="btn-save" onclick="saveCount()">&#128190; Save</button>
+    <button class="btn" onclick="discardDraft()">Discard</button>
+  </div>
+</div>
+
+<!-- ============ ONE DRAWER'S COUNTS (See Counts / History) ============ -->
+<div id="s-reg" class="screen">
+  <div class="topbar"><button class="btn back" onclick="back()">&lsaquo; Back</button></div>
+  <div class="mtitle" id="reg-title" style="margin-bottom:4px;"></div>
+  <div class="muted" id="reg-sub" style="margin-bottom:12px;"></div>
+  <div id="reg-list"></div>
+</div>
+
+<!-- ============ ONE COUNT'S BREAKDOWN ============ -->
+<div id="s-entry" class="screen">
+  <div class="topbar"><button class="btn back" onclick="back()">&lsaquo; Back</button></div>
+  <div class="mtitle" id="entry-title" style="margin-bottom:12px;"></div>
+  <div class="card" id="entry-body"></div>
+  <button class="btn btn-block" id="btn-edit" onclick="editEntry()">&#9998; Edit this count (PIN)</button>
+</div>
+
+<!-- ============ HISTORY: CALENDAR -> DAY ============ -->
+<div id="s-cal" class="screen">
+  <div class="topbar"><button class="btn back" onclick="back()">&lsaquo; Back</button></div>
+  <div id="cal-wrap"></div>
+</div>
+<div id="s-day" class="screen">
+  <div class="topbar"><button class="btn back" onclick="back()">&lsaquo; Calendar</button></div>
+  <div class="mtitle" id="day-title" style="margin-bottom:12px;"></div>
+  <div id="day-list"></div>
+</div>
+
+<!-- ============ DISCREPANCIES ============ -->
+<div id="s-disc" class="screen">
+  <div class="topbar"><button class="btn back" onclick="back()">&lsaquo; Back</button></div>
+  <div class="hero"><div class="hero-title">DISCREPANCIES</div><div class="hero-sub" id="disc-sub">Counts where the POS check or the safe was off</div></div>
+  <div class="chips" id="disc-chips"></div>
+  <div id="disc-body"></div>
+</div>
+
+<!-- ============ END-OF-DAY REPORT ============ -->
+<div id="s-report" class="screen">
+  <div class="topbar no-print"><button class="btn back" onclick="back()">&lsaquo; Back</button><button class="btn btn-primary" style="margin-left:auto;" onclick="window.print()">&#128424; Print</button></div>
+  <div class="rpt" id="rpt"></div>
+</div>
+
+</div>
+
+<!-- ============ PIN PROMPT ============ -->
+<div class="modal" id="pin-modal"><div class="mbox">
+  <div class="h2 big" id="pin-title">Enter PIN</div>
+  <div class="muted" id="pin-sub" style="margin:4px 0 14px;"></div>
+  <input class="pin" id="pin-input" type="password" inputmode="numeric" maxlength="8" autocomplete="off" onkeydown="if(event.key==='Enter')pinSubmit()">
+  <div class="pin-err" id="pin-err"></div>
+  <div class="row2"><button class="btn" onclick="pinCancel()">Cancel</button><button class="btn btn-primary" onclick="pinSubmit()">Unlock</button></div>
+</div></div>
