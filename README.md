@@ -5,8 +5,8 @@ No build step -- Netlify serves it as-is. Whoever counts types their name.
 
 ## Home screen
 - **Drawer Count**: open to anyone. A plain counter -- coins, coin rolls, dollars, total. Nothing is saved.
-- **Stores**: locked with PIN **1043** (re-locks whenever you return to the home screen). Inside: Darien / Westmont.
-- **Editing a saved count** needs the same PIN (1043). The numbers a count had before are kept on the count itself (`counts_json.edits`).
+- **Stores**: locked with a PIN (re-locks whenever you return to the home screen). Inside: Darien / Westmont.
+- **Editing a saved count** needs the same PIN. The numbers a count had before are kept on the count itself (`counts_json.edits`).
 - Home-screen icon is the ZA only; the name suggested when added is "Drawer Counts".
 
 ## Stores and drawers
