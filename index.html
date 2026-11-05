@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Drawer Counts">
@@ -20,6 +20,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--gray-800);max-width:520px;marg
 .screen{display:none;}
 .screen.on{display:block;}
 .topbar{display:flex;align-items:center;gap:10px;padding:14px 0 8px;}
+input,select,textarea{font-size:16px;}
 .btn{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;border-radius:8px;padding:12px 14px;border:1px solid var(--gray-200);background:#fff;color:var(--black);cursor:pointer;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
 .btn:active{transform:scale(0.98);}
 .btn-primary{background:var(--red);color:#fff;border-color:var(--red);}
@@ -52,7 +53,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--gray-800);max-width:520px;marg
 .frow{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--gray-100);font-size:13px;}
 .frow:last-child{border-bottom:none;}
 .frow label{color:var(--gray-600);font-weight:600;font-size:12.5px;padding-right:10px;}
-.frow input{border:1px solid #ddd;border-radius:7px;padding:6px 9px;font-size:14px;width:110px;text-align:right;font-family:inherit;}
+.frow input{border:1px solid #ddd;border-radius:7px;padding:6px 9px;font-size:16px;width:110px;text-align:right;font-family:inherit;}
 .frow input.wide{width:170px;text-align:left;}
 .acc{background:#fff;border-radius:12px;box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;}
 .acc-head{padding:13px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
@@ -60,7 +61,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--gray-800);max-width:520px;marg
 .chev{font-size:11px;color:var(--gray-400);}
 .acc-body{padding:4px 16px 14px;border-top:1px solid var(--gray-100);}
 .qrow{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0f0;font-size:13px;}
-.qrow input{width:74px;text-align:right;border:1px solid #ddd;border-radius:6px;padding:6px 8px;font-size:14px;font-family:inherit;}
+.qrow input{width:74px;text-align:right;border:1px solid #ddd;border-radius:6px;padding:6px 8px;font-size:16px;font-family:inherit;}
 .totalbox{margin-top:8px;border-radius:10px;padding:16px;background:var(--black);text-align:center;color:#fff;}
 .tlabel{font-size:10px;color:rgba(255,255,255,0.6);font-weight:700;letter-spacing:0.06em;text-transform:uppercase;}
 .tamt{font-family:'Bebas Neue',sans-serif;font-size:38px;}
