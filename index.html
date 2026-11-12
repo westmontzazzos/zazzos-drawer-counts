@@ -21,6 +21,7 @@ body{font-family:'DM Sans',sans-serif;color:var(--gray-800);max-width:520px;marg
 .screen.on{display:block;}
 .topbar{display:flex;align-items:center;gap:10px;padding:14px 0 8px;}
 input,select,textarea{font-size:16px;}
+.tile,.btn{touch-action:manipulation;}
 .btn{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;border-radius:8px;padding:12px 14px;border:1px solid var(--gray-200);background:#fff;color:var(--black);cursor:pointer;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,0.08);}
 .btn:active{transform:scale(0.98);}
 .btn-primary{background:var(--red);color:#fff;border-color:var(--red);}
@@ -141,7 +142,7 @@ table.dr tr{page-break-inside:avoid;}
   </div>
   <div class="tile" onclick="openStores()">
     <div class="tile-ico">&#128274;</div>
-    <div><div class="tile-name">STORES</div><div class="tile-sub">Darien &amp; Westmont &mdash; counts, history, reports.<br>PIN needed.</div></div>
+    <div><div class="tile-name">STORES</div><div class="tile-sub">Darien &amp; Westmont &mdash; counts, history, reports.</div></div>
   </div>
 </div>
 
@@ -250,7 +251,7 @@ table.dr tr{page-break-inside:avoid;}
   <div class="topbar"><button class="btn back" onclick="back()">&lsaquo; Back</button></div>
   <div class="mtitle" id="entry-title" style="margin-bottom:12px;"></div>
   <div class="card" id="entry-body"></div>
-  <button class="btn btn-block" id="btn-edit" onclick="editEntry()">&#9998; Edit this count (PIN)</button>
+  <button class="btn btn-block" id="btn-edit" onclick="editEntry()">&#9998; Edit this count (tap 5 times)</button>
 </div>
 
 <!-- ============ HISTORY: CALENDAR -> DAY ============ -->
@@ -706,11 +707,12 @@ function buildReport(dateStr,rows){
     +'<div class="rpt-foot">Each line is that count compared to the drawer\'s opening amount (Safe: its target). Drawer Net adds up that drawer\'s lines. Spot checks are not included.</div>';
 }
 
-// ---------- home screen: Drawer Count (anyone) or Stores (PIN) ----------
-var PIN='1043';
+// ---------- home screen: Drawer Count (anyone) or Stores (tap the lock tile 5 times) ----------
+var TAPS={};
+function tap5(key,cb){var t=Date.now(),r=TAPS[key];if(!r||t-r.t>2000)r={n:0};r.n++;r.t=t;TAPS[key]=r;if(r.n>=5){TAPS[key]=null;cb();}}
 function openStores(){
   if(S.unlocked){go('s-stores');return;}
-  askPin('Stores','Enter the PIN to open the stores.',function(){S.unlocked=true;go('s-stores');});
+  tap5('stores',function(){S.unlocked=true;go('s-stores');});
 }
 function askPin(title,sub,cb){
   S.pinCb=cb;$('pin-title').textContent=title;$('pin-sub').textContent=sub||'';$('pin-input').value='';$('pin-err').textContent='';
@@ -742,7 +744,7 @@ function recalcSimple(){
 
 // ---------- editing a saved count (PIN) -- the original numbers are kept on the count ----------
 function editEntry(){
-  askPin('Edit count','Enter the password to edit this saved count.',function(){startEdit(S.regRows[S.entryIdx]);});
+  tap5('edit',function(){startEdit(S.regRows[S.entryIdx]);});
 }
 function startEdit(row){
   var reg=normReg(row.register),d=drawerById(reg);
