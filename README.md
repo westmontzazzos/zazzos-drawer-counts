@@ -1,17 +1,16 @@
 # Zazzo's Drawer Counts
 
-One app for counting cash drawers at both stores (Darien and Westmont). Single file: `index.html` (plus the home-screen icon files and `manifest.webmanifest`).
+Cash drawer counts for Zazzo's Darien. Single file: `index.html` (plus the home-screen icon files and `manifest.webmanifest`).
 No build step -- Netlify serves it as-is. Whoever counts types their name.
 
 ## Home screen
 - **Drawer Count**: open to anyone. A plain counter -- coins, coin rolls, dollars, total. Nothing is saved.
-- **Stores**: locked with a PIN (re-locks whenever you return to the home screen). Inside: Darien / Westmont.
+- **Stores**: locked with a PIN (re-locks whenever you return to the home screen). Opens straight to Darien.
 - **Editing a saved count** needs the same PIN. The numbers a count had before are kept on the count itself (`counts_json.edits`).
 - Home-screen icon is the ZA only; the name suggested when added is "Drawer Counts".
 
 ## Stores and drawers
 - **Darien** (table `darien_drawer_counts`, history carried over from the old Darien app): Cashier (drawer 2, float $250), Bar (station 7, float $250), Safe (target $525).
-- **Westmont** (table `westmont_drawer_counts`): Cashier 5 ($250), Cashier 8 ($250), Driver 2 ($300), Bar 9 ($250), Bar 12 ($250), Safe (target $500).
 
 ## How a drawer works
 - First tap of the day = **Open**. After that: **Shift Change** or **Close** (as many shift changes as needed), plus **See Counts** and **Spot Check** (count and record only). The Safe only has Open and Close.
