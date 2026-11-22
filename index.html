@@ -308,7 +308,7 @@ var STORES={
     drawers:[
       {id:'Cashier 5',label:'CASHIER 5',kind:'register',float:250},
       {id:'Cashier 8',label:'CASHIER 8',kind:'register',float:250},
-      {id:'Manager 3',label:'MANAGER 3',kind:'register',float:300},
+      {id:'Manager 3',label:'MANAGER 3',kind:'register',float:250},
       {id:'Bar 9',label:'BAR 9',kind:'bar',float:250},
       {id:'Bar 12',label:'BAR 12',kind:'bar',float:250},
       {id:'Safe',label:'SAFE',kind:'safe',float:500}],
@@ -502,6 +502,7 @@ function recalc(){
     }else{
       if(Math.abs(diff)<0.005){pl.textContent='Even \u2014 no pull needed';pl.style.color='rgba(255,255,255,0.8)';}
       else if(diff>0){pl.textContent='PULL '+money(diff);pl.style.color='#6ee39a';}
+      else if(t==='opener'){pl.textContent='ADD '+money(Math.abs(diff))+' \u2014 to reach '+money(openAmt);pl.style.color='#ff8a8a';}
       else{pl.textContent='\u26a0\ufe0f SHORT '+money(Math.abs(diff));pl.style.color='#ff8a8a';}
     }
   }
