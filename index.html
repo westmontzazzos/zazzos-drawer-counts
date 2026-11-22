@@ -119,6 +119,26 @@ table.dr tr{page-break-inside:avoid;}
 .dr-eod{margin-top:22px;background:var(--black);color:#fff;border-radius:8px;padding:14px 16px;page-break-inside:avoid;}
 .dr-srow{display:flex;justify-content:space-between;font-size:11px;letter-spacing:0.05em;padding:3px 0;color:#ccc;}
 .dr-total{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid #555;margin-top:8px;padding-top:10px;font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:0.08em;}
+.rpt-print-css{}
+#rpt-print{display:none;}
+.pr{font-family:'DM Sans',Helvetica,Arial,sans-serif;color:#000;font-size:9.5pt;line-height:1.3;}
+.pr-head{display:flex;align-items:center;gap:10px;border-bottom:2px solid #E31010;padding-bottom:6px;margin-bottom:8px;}
+.pr-head img{height:34px;width:34px;}
+.pr-title{font-size:14pt;font-weight:700;}
+.pr-sub{font-size:8.5pt;color:#444;}
+.pr-t{width:100%;border-collapse:collapse;margin-bottom:8px;}
+.pr-t th{font-size:7.5pt;font-weight:700;text-align:left;border-bottom:1px solid #000;padding:3px 4px;color:#222;}
+.pr-t td{padding:2px 4px;border-bottom:0.5px solid #ccc;vertical-align:top;}
+.pr-t .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.pr-t .dn{font-weight:700;white-space:nowrap;}
+.pr-t tr.net td{background:#f2f2f2;border-bottom:1px solid #999;font-weight:700;}
+.pr-bad{font-weight:700;color:#B00000;}
+.pr-co{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;border-top:1px solid #000;padding-top:6px;margin-bottom:8px;}
+.pr-co h4{font-size:8.5pt;margin:0 0 2px;font-weight:700;}
+.pr-co div.l{display:flex;justify-content:space-between;font-variant-numeric:tabular-nums;}
+.pr-co .who{font-size:8pt;color:#333;margin:0 0 4px;}
+.pr-sum{border:1.5px solid #000;padding:6px 8px;display:flex;flex-wrap:wrap;gap:4px 22px;font-variant-numeric:tabular-nums;}
+.pr-sum b{font-size:11pt;}
 .rpt-foot{font-size:9px;color:#aaa;margin-top:10px;}
 @media print{
   html,body{background:#fff;}
@@ -128,6 +148,8 @@ table.dr tr{page-break-inside:avoid;}
   .no-print{display:none !important;}
   .modal{display:none !important;}
   .rpt{box-shadow:none;border-radius:0;padding:0;}
+  body.compact-print #rpt{display:none !important;}
+  body.compact-print #rpt-print{display:block !important;}
   @page{margin:12mm;}
 }
 </style>
@@ -296,6 +318,7 @@ table.dr tr{page-break-inside:avoid;}
 <div id="s-report" class="screen">
   <div class="topbar no-print"><button class="btn back" onclick="back()">&lsaquo; Back</button><button class="btn btn-primary" style="margin-left:auto;" onclick="window.print()">&#128424; Print</button></div>
   <div class="rpt" id="rpt"></div>
+  <div id="rpt-print"></div>
 </div>
 
 </div>
@@ -331,7 +354,7 @@ var STORES={
       {id:'Bar 9',label:'BAR 9',kind:'bar',float:250},
       {id:'Bar 12',label:'BAR 12',kind:'bar',float:250},
       {id:'Safe',label:'SAFE',kind:'safe',float:500}],
-    legacy:{},closeouts:'westmont_closeouts',noPennies:true,openPullAdd:true,safeOverShort:true}
+    legacy:{},closeouts:'westmont_closeouts',noPennies:true,openPullAdd:true,safeOverShort:true,compactPrint:true}
 };
 // Names for the Manager drawer close-out dropdowns
 var DRIVERS=['Andrew','Charlie','Jeff Z','Joliet Mike','Julie','Leah','Mike B','Mike G','Oscar','Rhett','Rick'];
@@ -775,8 +798,51 @@ function openReport(){
     var rows=res[0],cos=res[1];
     if(S.store!==st)return;
     if(!rows.length&&!cos.length){alert('No drawer counts logged for today yet.');return;}
-    $('rpt').innerHTML=buildReport(bd,rows,cos);go('s-report');
+    $('rpt').innerHTML=buildReport(bd,rows,cos);
+    document.body.classList.toggle('compact-print',!!st.compactPrint);
+    $('rpt-print').innerHTML=st.compactPrint?buildPrintReport(bd,rows,cos):'';
+    go('s-report');
   }).catch(function(e){alert('Couldn\'t load the counts: '+e.message);});
+}
+// One-page printed version (Westmont): same numbers as the screen report, condensed.
+function m2(v){v=Number(v)||0;var a=Math.abs(v).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');return (v<-0.005?'-':'')+'$'+a;}
+function s2(v){return Math.abs(v)<0.005?'Even':(v>0?'+':'')+m2(v);}
+function buildPrintReport(dateStr,rows,cos){
+  var groups={},names=[];
+  rows.forEach(function(r){var k=normReg(r.register);if(!groups[k]){groups[k]=[];names.push(k);}groups[k].push(r);});
+  names=orderRegs(names);
+  var eod=0,posShort=0,body='',nets=[];
+  names.forEach(function(name){
+    var list=groups[name].slice().sort(function(a,b){return new Date(a.counted_at)-new Date(b.counted_at);});
+    var net=0;
+    list.forEach(function(r,i){
+      var spot=r.count_type==='spot_check',line=Number(r.pull_amount||0);if(!spot)net+=line;
+      var hasPos=r.pos_expected!=null&&r.pos_variance!=null,pv=hasPos?Number(r.pos_variance):0;if(hasPos&&pv<-0.005)posShort++;
+      var chk=hasPos?(Math.abs(pv)<0.005?'Even':(pv<0?'<span class="pr-bad">SHORT '+m2(Math.abs(pv))+'</span>':'OVER '+m2(pv))):'';
+      body+='<tr><td class="dn">'+(i===0?esc(labelOf(name)):'')+'</td><td>'+(TYPE_LABELS[r.count_type]||'')+'</td><td>'+esc(r.counted_by||r.cashier_name||'')+'</td><td>'+fmtTime(r.counted_at)+'</td><td class="n">'+m2(r.total)+'</td><td class="n">'+(hasPos?m2(r.pos_expected):'')+'</td><td class="n">'+chk+'</td><td class="n">'+(spot?'Counted only':s2(line))+'</td></tr>';
+    });
+    net=r2(net);eod+=net;nets.push([labelOf(name),net]);
+    body+='<tr class="net"><td colspan="7">'+esc(labelOf(name))+' net</td><td class="n">'+s2(net)+'</td></tr>';
+  });
+  var co='';
+  if(cos&&cos.length){
+    var cash=0;
+    function blk(title,pt,act,sign){
+      var l=cos.filter(function(c){return c.person_type===pt&&c.action===act;});
+      var tot=r2(l.reduce(function(a,c){return a+(Number(c.amount)||0);},0));cash+=sign*tot;
+      return '<div><div class="l"><span>'+title+'</span><b>'+m2(tot)+'</b></div><div class="who">'+(l.length?l.map(function(c){return esc(c.person_name)+' '+m2(c.amount);}).join(', '):'None')+'</div></div>';
+    }
+    var d=blk('Paid out to drivers','driver','payout',-1)+blk('Collected from drivers','driver','collect',1);
+    var sv=blk('Paid out to servers (cash)','server','payout',-1)+blk('Zelled to servers','server','zelle',0)+blk('Collected from servers','server','collect',1);
+    cash=r2(cash);
+    co='<div class="pr-co"><div><h4>Drivers (Manager 3)</h4>'+d+'</div><div><h4>Servers (Manager 3)</h4>'+sv+'</div></div>';
+    co+='<div class="pr-sum" style="margin-bottom:6px;"><span>Close-outs cash net (Manager 3): <b>'+s2(cash)+'</b></span></div>';
+  }
+  var now=new Date();
+  return '<div class="pr"><div class="pr-head"><img src="'+LOGOS[S.store.key]+'" alt=""><div><div class="pr-title">Zazzo\'s '+esc(S.store.name)+': End of Day Drawer Report</div><div class="pr-sub">'+fmtDate(dateStr)+' &middot; Printed '+fmtTime(now.toISOString())+'</div></div></div>'
+    +'<table class="pr-t"><thead><tr><th>Drawer</th><th>Count</th><th>Name</th><th>Time</th><th class="n">Total</th><th class="n">POS</th><th class="n">POS check</th><th class="n">+ / &minus;</th></tr></thead><tbody>'+body+'</tbody></table>'
+    +co
+    +'<div class="pr-sum"><span>End of day total: <b>'+s2(r2(eod))+'</b></span><span>POS shortages: <b>'+posShort+'</b></span></div></div>';
 }
 function buildReport(dateStr,rows,cos){
   var groups={},names=[];
