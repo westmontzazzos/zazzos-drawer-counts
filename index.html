@@ -315,8 +315,8 @@ var STORES={
     legacy:{}}
 };
 var ITEMS={
-  coins:[{id:'penny',label:'Penny',value:0.01},{id:'nickel',label:'Nickel',value:0.05},{id:'dime',label:'Dime',value:0.10},{id:'quarter',label:'Quarter',value:0.25}],
-  rolls:[{id:'pennyRoll',label:'Penny Roll (50/roll)',value:0.50},{id:'nickelRoll',label:'Nickel Roll (40/roll)',value:2.00},{id:'dimeRoll',label:'Dime Roll (50/roll)',value:5.00},{id:'quarterRoll',label:'Quarter Roll (40/roll)',value:10.00}],
+  coins:[{id:'penny',label:'Penny',value:0.01,old:true},{id:'nickel',label:'Nickel',value:0.05},{id:'dime',label:'Dime',value:0.10},{id:'quarter',label:'Quarter',value:0.25}],
+  rolls:[{id:'pennyRoll',label:'Penny Roll (50/roll)',value:0.50,old:true},{id:'nickelRoll',label:'Nickel Roll (40/roll)',value:2.00},{id:'dimeRoll',label:'Dime Roll (50/roll)',value:5.00},{id:'quarterRoll',label:'Quarter Roll (40/roll)',value:10.00}],
   bills:[{id:'b1',label:'$1',value:1},{id:'b5',label:'$5',value:5},{id:'b10',label:'$10',value:10},{id:'b20',label:'$20',value:20},{id:'b50',label:'$50',value:50},{id:'b100',label:'$100',value:100}]
 };
 var TYPE_LABELS={opener:'OPEN',shift_change:'SHIFT CHANGE',closer:'CLOSE',spot_check:'SPOT CHECK',am:'AM COUNT',pm:'PM COUNT'};
@@ -422,12 +422,14 @@ function updateChecks(){
 }
 
 // ---------- the count form ----------
+// Pennies are no longer counted. They only show when editing an old count that had them.
+var SHOW_OLD={};
 function buildSec(id,items){
-  var h='';items.forEach(function(it){h+='<div class="qrow"><span>'+it.label+'</span><input type="number" inputmode="numeric" min="0" id="q-'+it.id+'" placeholder="0" oninput="onInput()"></div>';});
+  var h='';items.forEach(function(it){if(it.old&&!SHOW_OLD[it.id])return;h+='<div class="qrow"><span>'+it.label+'</span><input type="number" inputmode="numeric" min="0" id="q-'+it.id+'" placeholder="0" oninput="onInput()"></div>';});
   $('body-'+id).innerHTML=h;
 }
 function openForm(draft,isEdit){
-  if(!isEdit)S.editRow=null;
+  if(!isEdit){S.editRow=null;SHOW_OLD={};}
   if(draft&&draft.type){}else{draft=null;}
   var d=S.drawer,t=S.type,safe=d.kind==='safe',bar=d.kind==='bar',handoff=(t==='shift_change'||t==='closer');
   $('form-title').textContent=d.label+' \u2014 '+TYPE_LABELS[t];
@@ -729,7 +731,7 @@ function pinCancel(){S.pinCb=null;$('pin-modal').className='modal';}
 function openSimple(){buildSimple();go('s-simple');}
 function buildSimple(){
   ['coins','rolls','bills'].forEach(function(sec){
-    var h='';ITEMS[sec].forEach(function(it){h+='<div class="qrow"><span>'+it.label+'</span><input type="number" inputmode="numeric" min="0" id="sq-'+it.id+'" placeholder="0" oninput="recalcSimple()"></div>';});
+    var h='';ITEMS[sec].forEach(function(it){if(it.old)return;h+='<div class="qrow"><span>'+it.label+'</span><input type="number" inputmode="numeric" min="0" id="sq-'+it.id+'" placeholder="0" oninput="recalcSimple()"></div>';});
     $('sbody-'+sec).innerHTML=h;
   });
   recalcSimple();
@@ -752,6 +754,7 @@ function startEdit(row){
   if(!d)d={id:reg,label:String(reg).toUpperCase(),kind:'register',float:Number(row.starting_balance)||250};
   var b={};try{b=JSON.parse(row.counts_json||'{}')||{};}catch(e){}
   var q={};['coins','rolls','bills'].forEach(function(sec){var s=b[sec]||{};for(var k in s){if(s[k])q[k]=String(s[k]);}});
+  SHOW_OLD={};if(q.penny)SHOW_OLD.penny=1;if(q.pennyRoll)SHOW_OLD.pennyRoll=1;
   S.drawer=d;S.type=row.count_type;
   openForm({type:row.count_type,name:row.counted_by||row.cashier_name||'',open:(row.starting_balance!=null?String(row.starting_balance):''),pos:(row.pos_expected!=null?String(row.pos_expected):''),tip:(b.tipout?String(b.tipout):''),q:q},true);
   S.editRow=row;
