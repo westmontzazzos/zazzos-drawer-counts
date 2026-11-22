@@ -331,7 +331,7 @@ var STORES={
       {id:'Bar 9',label:'BAR 9',kind:'bar',float:250},
       {id:'Bar 12',label:'BAR 12',kind:'bar',float:250},
       {id:'Safe',label:'SAFE',kind:'safe',float:500}],
-    legacy:{},closeouts:'westmont_closeouts'}
+    legacy:{},closeouts:'westmont_closeouts',noPennies:true,openPullAdd:true}
 };
 // Names for the Manager drawer close-out dropdowns
 var DRIVERS=['Andrew','Charlie','Jeff Z','Joliet Mike','Julie','Leah','Mike B','Mike G','Oscar','Rhett','Rick'];
@@ -445,10 +445,10 @@ function updateChecks(){
 }
 
 // ---------- the count form ----------
-// Pennies are no longer counted. They only show when editing an old count that had them.
+// Westmont doesn't count pennies (they only show when editing an old count that had them). Darien still does.
 var SHOW_OLD={};
 function buildSec(id,items){
-  var h='';items.forEach(function(it){if(it.old&&!SHOW_OLD[it.id])return;h+='<div class="qrow"><span>'+it.label+'</span><input type="number" inputmode="numeric" min="0" id="q-'+it.id+'" placeholder="0" oninput="onInput()"></div>';});
+  var h='';items.forEach(function(it){if(it.old&&S.store&&S.store.noPennies&&!SHOW_OLD[it.id])return;h+='<div class="qrow"><span>'+it.label+'</span><input type="number" inputmode="numeric" min="0" id="q-'+it.id+'" placeholder="0" oninput="onInput()"></div>';});
   $('body-'+id).innerHTML=h;
 }
 function openForm(draft,isEdit){
@@ -527,7 +527,7 @@ function recalc(){
     }else{
       if(Math.abs(diff)<0.005){pl.textContent='Even \u2014 no pull needed';pl.style.color='rgba(255,255,255,0.8)';}
       else if(diff>0){pl.textContent='PULL '+money(diff);pl.style.color='#6ee39a';}
-      else if(t==='opener'){pl.textContent='ADD '+money(Math.abs(diff))+' \u2014 to reach '+money(openAmt);pl.style.color='#ff8a8a';}
+      else if(t==='opener'&&S.store.openPullAdd){pl.textContent='ADD '+money(Math.abs(diff))+' \u2014 to reach '+money(openAmt);pl.style.color='#ff8a8a';}
       else{pl.textContent='\u26a0\ufe0f SHORT '+money(Math.abs(diff));pl.style.color='#ff8a8a';}
     }
   }
@@ -820,7 +820,7 @@ function pinCancel(){S.pinCb=null;$('pin-modal').className='modal';}
 function openSimple(){buildSimple();go('s-simple');}
 function buildSimple(){
   ['coins','rolls','bills'].forEach(function(sec){
-    var h='';ITEMS[sec].forEach(function(it){if(it.old)return;h+='<div class="qrow"><span>'+it.label+'</span><input type="number" inputmode="numeric" min="0" id="sq-'+it.id+'" placeholder="0" oninput="recalcSimple()"></div>';});
+    var h='';ITEMS[sec].forEach(function(it){h+='<div class="qrow"><span>'+it.label+'</span><input type="number" inputmode="numeric" min="0" id="sq-'+it.id+'" placeholder="0" oninput="recalcSimple()"></div>';});
     $('sbody-'+sec).innerHTML=h;
   });
   recalcSimple();
