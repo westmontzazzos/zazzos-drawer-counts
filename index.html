@@ -331,7 +331,7 @@ var STORES={
       {id:'Bar 9',label:'BAR 9',kind:'bar',float:250},
       {id:'Bar 12',label:'BAR 12',kind:'bar',float:250},
       {id:'Safe',label:'SAFE',kind:'safe',float:500}],
-    legacy:{},closeouts:'westmont_closeouts',noPennies:true,openPullAdd:true}
+    legacy:{},closeouts:'westmont_closeouts',noPennies:true,openPullAdd:true,safeOverShort:true}
 };
 // Names for the Manager drawer close-out dropdowns
 var DRIVERS=['Andrew','Charlie','Jeff Z','Joliet Mike','Julie','Leah','Mike B','Mike G','Oscar','Rhett','Rick'];
@@ -520,7 +520,11 @@ function recalc(){
   if(t==='spot_check'){pl.textContent='Spot check \u2014 counted only, nothing to compare';pl.style.color='rgba(255,255,255,0.7)';}
   else{
     var diff=r2(total-openAmt);
-    if(safe){
+    if(safe&&S.store.safeOverShort){
+      if(Math.abs(diff)<0.005){pl.textContent='\u2705 At target ('+money(d.float)+')';pl.style.color='#6ee39a';}
+      else if(diff>0){pl.textContent='OVER '+money(diff)+' (target '+money(d.float)+')';pl.style.color='#ffd166';}
+      else{pl.textContent='\u26a0\ufe0f SHORT '+money(Math.abs(diff))+' (target '+money(d.float)+')';pl.style.color='#ff8a8a';}
+    }else if(safe){
       if(Math.abs(diff)<0.005){pl.textContent='\u2705 At '+money(d.float)+' \u2014 good';pl.style.color='#6ee39a';}
       else if(diff>0){pl.textContent='OVER by '+money(diff)+' \u2014 remove to reach '+money(d.float);pl.style.color='#ffd166';}
       else{pl.textContent='\u26a0\ufe0f SHORT '+money(Math.abs(diff))+' \u2014 add to reach '+money(d.float);pl.style.color='#ff8a8a';}
