@@ -56,6 +56,8 @@ input,select,textarea{font-size:16px;}
 .frow label{color:var(--gray-600);font-weight:600;font-size:12.5px;padding-right:10px;}
 .frow input{border:1px solid #ddd;border-radius:7px;padding:6px 9px;font-size:16px;width:110px;text-align:right;font-family:inherit;}
 .frow input.wide{width:170px;text-align:left;}
+.frow select{border:1px solid #ddd;border-radius:7px;padding:6px 9px;font-size:16px;width:170px;background:#fff;font-family:inherit;color:var(--black);}
+.co-msg{font-size:14px;font-weight:600;text-align:center;padding:10px 4px 2px;}
 .acc{background:#fff;border-radius:12px;box-shadow:var(--shadow);margin-bottom:10px;overflow:hidden;}
 .acc-head{padding:13px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
 .acc-title{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:0.06em;}
@@ -191,9 +193,26 @@ table.dr tr{page-break-inside:avoid;}
       <button id="choice-shift" class="btn btn-primary" onclick="beginCount('shift_change')">Shift Change</button>
       <button class="btn btn-dark" onclick="beginCount('closer')">Close</button>
     </div>
+    <div id="choice-closeouts" style="display:none;">
+      <div class="row2"><button class="btn btn-primary" onclick="openCloseout('driver')">Close Out Driver</button><button class="btn btn-primary" onclick="openCloseout('server')">Close Out Server</button></div>
+    </div>
     <button class="btn btn-block mt" onclick="seeCounts()">See Counts <span class="muted">&mdash; today's counts for this drawer</span></button>
     <button id="choice-spot" class="btn btn-block mt" onclick="beginCount('spot_check')">Spot Check <span class="muted">&mdash; just count &amp; record</span></button>
   </div>
+</div>
+
+<!-- ============ CLOSE OUT A DRIVER / SERVER (Manager drawer) ============ -->
+<div id="s-closeout" class="screen">
+  <div class="topbar"><button class="btn back" onclick="back()">&lsaquo; Back</button></div>
+  <div class="hero"><div class="hero-title" id="co-title"></div><div class="hero-sub" id="co-sub"></div></div>
+  <div class="card" style="padding:6px 14px;">
+    <div class="frow"><label id="co-name-label">Name</label><select id="co-name" onchange="coMsg()"></select></div>
+    <div class="frow" id="co-pos-row"><label>POS driver cash</label><input type="number" inputmode="decimal" step="0.01" id="co-pos" oninput="coMsg()"></div>
+    <div style="padding:10px 0 4px;"><div class="chips" id="co-acts" style="margin-bottom:6px;"></div></div>
+    <div class="frow"><label>Amount</label><input type="number" inputmode="decimal" step="0.01" id="co-amt" oninput="coMsg()"></div>
+  </div>
+  <div class="co-msg" id="co-msg"></div>
+  <button class="btn btn-primary btn-block mt" id="co-save" onclick="saveCloseout()">&#128190; Save</button>
 </div>
 
 <!-- ============ BAR CHECKLIST (before counting a shift change / close) ============ -->
@@ -308,12 +327,15 @@ var STORES={
     drawers:[
       {id:'Cashier 5',label:'CASHIER 5',kind:'register',float:250},
       {id:'Cashier 8',label:'CASHIER 8',kind:'register',float:250},
-      {id:'Manager 3',label:'MANAGER 3',kind:'register',float:250},
+      {id:'Manager 3',label:'MANAGER 3',kind:'register',float:250,closeouts:true},
       {id:'Bar 9',label:'BAR 9',kind:'bar',float:250},
       {id:'Bar 12',label:'BAR 12',kind:'bar',float:250},
       {id:'Safe',label:'SAFE',kind:'safe',float:500}],
-    legacy:{}}
+    legacy:{},closeouts:'westmont_closeouts'}
 };
+// Names for the Manager drawer close-out dropdowns
+var DRIVERS=['Andrew','Charlie','Jeff Z','Joliet Mike','Julie','Leah','Mike B','Mike G','Oscar','Rhett','Rick'];
+var SERVERS=['Abby','Alexis','Brianna','Bridget','Candace','Cheyenne','Doris','Hannah M','Hannah Z','Jamie','Justin','Kelly','Kenzie','Reagan','Sio'];
 var ITEMS={
   coins:[{id:'penny',label:'Penny',value:0.01,old:true},{id:'nickel',label:'Nickel',value:0.05},{id:'dime',label:'Dime',value:0.10},{id:'quarter',label:'Quarter',value:0.25}],
   rolls:[{id:'pennyRoll',label:'Penny Roll (50/roll)',value:0.50,old:true},{id:'nickelRoll',label:'Nickel Roll (40/roll)',value:2.00},{id:'dimeRoll',label:'Dime Roll (50/roll)',value:5.00},{id:'quarterRoll',label:'Quarter Roll (40/roll)',value:10.00}],
@@ -404,6 +426,7 @@ function tapDrawer(i){
   $('choice-title').textContent=d.label;
   $('choice-shift').style.display=(d.kind==='safe')?'none':'';
   $('choice-spot').style.display=(d.kind==='safe')?'none':'';
+  $('choice-closeouts').style.display=d.closeouts?'':'none';
   go('s-choice');
 }
 function beginCount(type){
@@ -567,6 +590,71 @@ function saveCount(){
   });
 }
 
+// ---------- Manager drawer: close out drivers and servers ----------
+// Drivers: always cash -- Collect (into the drawer) or Pay out (out of the drawer).
+// Servers: Mon-Wed cash like drivers; Thu-Sun Zelle (doesn't touch the drawer) or Collect.
+var CO={type:null,act:null};
+function serverZelleDay(ds){var w=new Date(ds+'T12:00:00').getDay();return w===0||w>=4;}
+function openCloseout(type){
+  CO={type:type,act:null};
+  var bd=getBusinessDate(),zelle=serverZelleDay(bd),names=(type==='driver')?DRIVERS:SERVERS;
+  $('co-title').textContent=(type==='driver')?'CLOSE OUT DRIVER':'CLOSE OUT SERVER';
+  $('co-sub').textContent=S.drawer.label+' \u00b7 '+fmtDate(bd)+((type==='server')?(zelle?' \u00b7 Servers get Zelle today':' \u00b7 Servers are paid cash today'):'');
+  $('co-name-label').textContent=(type==='driver')?'Driver':'Server';
+  $('co-name').innerHTML='<option value="">Pick a name</option>'+names.map(function(n){return '<option>'+esc(n)+'</option>';}).join('');
+  $('co-pos-row').style.display=(type==='driver')?'':'none';$('co-pos').value='';
+  var acts=(type==='server'&&zelle)?[['zelle','Zelle'],['collect','Collect']]:[['collect','Collect'],['payout','Pay out']];
+  $('co-acts').innerHTML=acts.map(function(a){return '<div class="chip" id="co-act-'+a[0]+'" onclick="setCoAct(\''+a[0]+'\')">'+a[1]+'</div>';}).join('');
+  $('co-amt').value='';S.saving=false;$('co-save').disabled=false;coMsg();go('s-closeout');
+}
+function setCoAct(a){CO.act=a;var cs=document.querySelectorAll('#co-acts .chip');for(var i=0;i<cs.length;i++){cs[i].className='chip'+(cs[i].id==='co-act-'+a?' on':'');}coMsg();}
+function coMsg(){
+  var n=$('co-name').value,a=r2(parseFloat($('co-amt').value)||0),m=$('co-msg');
+  if(!n||!CO.act||!(a>0)){m.textContent='Pick the name, what happened, and the amount.';m.style.color='#888';return;}
+  if(CO.act==='collect'){m.textContent='Collect '+money(a)+' from '+n+' \u2014 goes INTO the drawer (+'+money(a)+')';m.style.color='#1a7a3c';}
+  else if(CO.act==='payout'){m.textContent='Pay '+n+' '+money(a)+' cash \u2014 comes OUT of the drawer (-'+money(a)+')';m.style.color='#c8102e';}
+  else{m.textContent='Zelle '+n+' '+money(a)+' \u2014 does not touch the drawer';m.style.color='#1e40af';}
+}
+function saveCloseout(){
+  if(S.saving)return;
+  var n=$('co-name').value,a=r2(parseFloat($('co-amt').value)||0),pos=$('co-pos').value.trim();
+  if(!n){alert('Pick the '+CO.type+'.');return;}
+  if(CO.type==='driver'&&pos===''){alert('Enter the POS driver cash.');return;}
+  if(!CO.act){alert('Pick what happened.');return;}
+  if(!(a>0)){alert('Enter the amount.');return;}
+  var row={business_date:getBusinessDate(),register:S.drawer.id,person_type:CO.type,person_name:n,action:CO.act,amount:a,pos_cash:(CO.type==='driver')?r2(parseFloat(pos)||0):null};
+  var msg=$('co-msg').textContent;
+  S.saving=true;$('co-save').disabled=true;
+  api(S.store.closeouts,{method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify([row])}).then(function(r){
+    if(!r.ok){return r.text().then(function(tx){var e=new Error('db '+r.status);e.status=r.status;e.body=tx;throw e;});}
+    S.saving=false;$('co-save').disabled=false;alert('Saved: '+msg);goHome();
+  }).catch(function(e){S.saving=false;$('co-save').disabled=false;alert('This close-out was NOT saved: '+e.message+'. Check the connection and try again.');});
+}
+function loadCloseouts(ds){
+  if(!S.store.closeouts)return Promise.resolve([]);
+  return api(S.store.closeouts+'?business_date=eq.'+ds+'&order=created_at.asc').then(function(r){return r.ok?r.json():[];}).catch(function(){return [];});
+}
+function closeoutHtml(cos){
+  if(!cos||!cos.length)return '';
+  var cash=0,h='';
+  function block(title,pt,act,sign){
+    var list=cos.filter(function(c){return c.person_type===pt&&c.action===act;});if(!list.length)return '';
+    var tot=0,body='';
+    list.forEach(function(c){var a=Number(c.amount)||0;tot+=a;
+      body+='<tr><td>'+esc(c.person_name)+'</td><td class="g">'+fmtTime(c.created_at)+'</td><td class="g">'+(c.pos_cash!=null?'POS '+(Number(c.pos_cash)<0?'-':'')+money(Math.abs(Number(c.pos_cash))):'')+'</td><td class="n b">'+money(a)+'</td></tr>';});
+    tot=r2(tot);if(sign)cash+=sign*tot;
+    var col=sign>0?'#1a7a3c':(sign<0?'#c8102e':'#1e40af');
+    return '<div class="dr-sec"><div class="dr-head">'+title+' &mdash; '+money(tot)+'</div><table class="dr"><tr><th>Name</th><th>Time</th><th></th><th class="n">Amount</th></tr>'+body+'</table><div class="dr-net"><span>TOTAL</span><b style="color:'+col+'">'+money(tot)+'</b></div></div>';
+  }
+  h+=block('PAID OUT TO DRIVERS','driver','payout',-1);
+  h+=block('COLLECTED FROM DRIVERS','driver','collect',1);
+  h+=block('PAID OUT TO SERVERS (CASH)','server','payout',-1);
+  h+=block('ZELLED TO SERVERS','server','zelle',0);
+  h+=block('COLLECTED FROM SERVERS','server','collect',1);
+  cash=r2(cash);
+  return h+'<div class="dr-sec"><div class="dr-net"><span>CLOSE-OUTS CASH NET (MANAGER DRAWER)</span><b style="color:'+sc(cash)+'">'+sm(cash)+'</b></div></div>';
+}
+
 // ---------- one drawer's counts (See Counts / History) ----------
 function seeCounts(){S.regRows=(S.today[S.drawer.id]||[]).slice();renderReg(S.drawer.id);go('s-reg');}
 function renderReg(reg){
@@ -679,13 +767,14 @@ function openDiscEntry(i){S.regRows=S.discRows;openEntry(i);}
 // ---------- end-of-day report (what prints) ----------
 function openReport(){
   var bd=getBusinessDate(),st=S.store;
-  loadRows('count_date=eq.'+bd+'&order=counted_at.asc').then(function(rows){
+  Promise.all([loadRows('count_date=eq.'+bd+'&order=counted_at.asc'),loadCloseouts(bd)]).then(function(res){
+    var rows=res[0],cos=res[1];
     if(S.store!==st)return;
-    if(!rows.length){alert('No drawer counts logged for today yet.');return;}
-    $('rpt').innerHTML=buildReport(bd,rows);go('s-report');
+    if(!rows.length&&!cos.length){alert('No drawer counts logged for today yet.');return;}
+    $('rpt').innerHTML=buildReport(bd,rows,cos);go('s-report');
   }).catch(function(e){alert('Couldn\'t load the counts: '+e.message);});
 }
-function buildReport(dateStr,rows){
+function buildReport(dateStr,rows,cos){
   var groups={},names=[];
   rows.forEach(function(r){var k=normReg(r.register);if(!groups[k]){groups[k]=[];names.push(k);}groups[k].push(r);});
   names=orderRegs(names);
@@ -705,7 +794,7 @@ function buildReport(dateStr,rows){
     summary+='<div class="dr-srow"><span>'+esc(label)+'</span><span style="color:'+scDark(net)+'">'+sm(r2(net))+'</span></div>';
   });
   return '<div class="rpt-head"><img src="'+LOGOS[S.store.key]+'" alt=""><div><div class="rpt-title">END OF DAY &mdash; DRAWER COUNTS</div><div class="rpt-sub">Zazzo\'s Pizza &amp; Catering &mdash; '+esc(S.store.name)+'</div></div></div>'
-    +'<div class="rpt-date">'+fmtDate(dateStr)+'</div>'+sections
+    +'<div class="rpt-date">'+fmtDate(dateStr)+'</div>'+sections+closeoutHtml(cos)
     +'<div class="dr-eod">'+summary+'<div class="dr-total"><span>END OF DAY TOTAL</span><span style="color:'+scDark(eod)+'">'+sm(r2(eod))+'</span></div>'+(posShort?'<div style="font-size:10px;color:#ff8a8a;margin-top:6px;letter-spacing:0.04em;">'+posShort+' POS SHORTAGE(S)</div>':'')+'</div>'
     +'<div class="rpt-foot">Each line is that count compared to the drawer\'s opening amount (Safe: its target). Drawer Net adds up that drawer\'s lines. Spot checks are not included.</div>';
 }
